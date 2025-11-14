@@ -1,0 +1,4 @@
+# Ignore Cargo build artifacts
+server/target
+client/target
+proxy/target

@@ -1,0 +1,6 @@
+[alias]
+build-clippy = "clippy --all-targets --all-features -- -Dwarnings"
+
+[build]
+rustflags = ["-D", "warnings"]
+
