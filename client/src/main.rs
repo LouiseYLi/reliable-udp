@@ -1,5 +1,5 @@
 mod args_helper;
-// mod globals;
+mod globals;
 mod io_helper;
 
 use args_helper::*;
@@ -10,9 +10,9 @@ use tokio::net::UdpSocket;
 async fn main() -> Result<(), std::io::Error> {
     println!("Hello from client!");
 
-    let seq: u32 = 0;
+    let mut seq: u32 = 0;
     // let expected_ack: u32 = 0;
-    // let buf = [0u8; 1024];
+    let mut buf = [0u8; 1024];
 
     let (target, timeout, retries) = match validate_args() {
         Ok(values) => values,
@@ -29,7 +29,7 @@ async fn main() -> Result<(), std::io::Error> {
     println!("\t Retries {}", &retries);
 
     loop {
-        handle_user_input(&socket, &target, &seq).await?;
+        handle_msg(&socket, &target, &mut seq, &mut buf).await?;
         // handle_ack(&socket, &expected_ack, &mut buf).await?;
     }
 }

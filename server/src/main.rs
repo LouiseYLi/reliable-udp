@@ -6,15 +6,16 @@ use args_helper::*;
 // use globals::*;
 use io_helper::*;
 use std::io;
+use std::net::SocketAddr;
 use tokio::net::UdpSocket;
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
     println!("Hello from server!");
 
-    let expected_seq: u32 = 0;
+    let mut expected_seq: u32 = 0;
     let mut buf = [0u8; 1024];
-
+    let mut target: SocketAddr = "0.0.0.0:0".parse().unwrap();
     let formatted_ip_at_port = match validate_args() {
         Ok(values) => values,
         Err(e) => {
@@ -27,6 +28,6 @@ async fn main() -> io::Result<()> {
     println!("\tServer is listening on {}", &formatted_ip_at_port);
 
     loop {
-        handle_msg(&socket, &expected_seq, &mut buf).await?;
+        handle_msg(&socket, &mut expected_seq, &mut buf, &mut target).await?;
     }
 }
