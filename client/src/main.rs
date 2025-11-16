@@ -11,10 +11,9 @@ async fn main() -> Result<(), std::io::Error> {
     println!("Hello from client!");
 
     let mut seq: u32 = 0;
-    // let expected_ack: u32 = 0;
     let mut buf = [0u8; 1024];
 
-    let (target, timeout, retries) = match validate_args() {
+    let (target, timeout, max_retries) = match validate_args() {
         Ok(values) => values,
         Err(e) => {
             eprintln!("Error: {}", e);
@@ -26,10 +25,9 @@ async fn main() -> Result<(), std::io::Error> {
 
     println!("\t Server at {}", &target);
     println!("\t Timeout {}", &timeout);
-    println!("\t Retries {}", &retries);
+    println!("\t Retries {}", &max_retries);
 
     loop {
-        handle_msg(&socket, &target, &mut seq, &mut buf).await?;
-        // handle_ack(&socket, &expected_ack, &mut buf).await?;
+        handle_msg(&socket, &target, &mut seq, &mut buf, &timeout, &max_retries).await?;
     }
 }

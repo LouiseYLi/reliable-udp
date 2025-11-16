@@ -69,8 +69,8 @@ fn validate_port(port: &str) -> Result<(), String> {
     Ok(())
 }
 
-fn validate_timeout(timeout: &str) -> Result<u16, String> {
-    let timeout = match timeout.parse::<u16>() {
+fn validate_timeout(timeout: &str) -> Result<u64, String> {
+    let timeout = match timeout.parse::<u64>() {
         Ok(n) => n,
         Err(_) => {
             return Err(format!("Timeout must be a valid number: {}", timeout));
@@ -96,7 +96,7 @@ fn format_ip_port(ip: &str, port: &str) -> String {
     format!("{}:{}", ip, port)
 }
 
-pub fn validate_args() -> Result<(String, u16, u16), String> {
+pub fn validate_args() -> Result<(String, u64, u16), String> {
     let matches = get_args();
     let ip = matches.get_one::<String>("target-ip").expect("IP required");
     let port = matches

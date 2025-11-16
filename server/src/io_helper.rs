@@ -18,7 +18,6 @@ pub async fn handle_msg(
 
     match verify_msg(buf, expected_seq) {
         Ok(seq) => {
-            *expected_seq += 1;
             process_msg(buf, total_len);
 
             let packet: Vec<u8> = generate_ack(&0, seq, &[]);
@@ -54,14 +53,17 @@ fn verify_msg(buf: &mut [u8], expected_seq: &mut u32) -> Result<u32, String> {
 
     println!("Expected Seq: {}", expected_seq);
     println!("Seq: {}", seq);
-    if *expected_seq != seq {
-        return Err(format!(
+    if seq > *expected_seq {
+        Err(format!(
             "expected seq {} does not match seq {}",
             expected_seq, seq
-        ));
+        ))
+    } else if seq < *expected_seq {
+        Ok(*expected_seq - 1)
+    } else {
+        *expected_seq += 1;
+        Ok(seq)
     }
-
-    Ok(seq)
 }
 
 fn process_msg(buf: &mut [u8], total_len: usize) {

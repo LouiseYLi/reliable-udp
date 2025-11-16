@@ -1,12 +1,16 @@
 use crate::globals::*;
 use std::io::{Write, stdin, stdout};
+use std::time::Duration;
 use tokio::net::UdpSocket;
+use tokio::time::timeout;
 
 pub async fn handle_msg(
     socket: &UdpSocket,
     target: &str,
     seq: &mut u32,
     buf: &mut [u8],
+    timeout_secs: &u64,
+    max_retries: &u16,
 ) -> Result<(), std::io::Error> {
     let msg = wait_user_input();
     println!("Seq: {}", seq);
@@ -15,21 +19,35 @@ pub async fn handle_msg(
     let packet: Vec<u8> = generate_msg(seq, 0, msg.as_bytes());
     println!("Gen Packet bytes: {:?}", packet);
 
-    socket.send_to(&packet, target).await?;
+    let mut retry: u16 = 0;
+    while retry < *max_retries {
+        socket.send_to(&packet, target).await?;
 
-    let (total_len, _) = socket.recv_from(buf).await?;
-    println!("Received {} bytes from server {}", total_len, target);
+        let ack_result = timeout(Duration::from_secs(*timeout_secs), socket.recv_from(buf)).await;
+        match ack_result {
+            Ok(Ok((_total_len, _target))) => match verify_ack(buf, seq) {
+                Ok(ack) => {
+                    *seq += 1;
+                    process_ack(&ack);
+                    break;
+                }
+                Err(_e) => {
+                    eprintln!("verify_ack error: {}", _e);
+                }
+            },
+            Ok(Err(_e)) => {
+                eprintln!("recv_from error: {}", _e);
+            }
+            Err(_e) => {
+                println!("Timeout expired, retransmit... {}", _e)
+            }
+        }
 
-    match verify_ack(buf, seq) {
-        Ok(ack) => {
-            *seq += 1;
-            process_ack(&ack);
-        }
-        Err(_e) => {
-            eprintln!("Error: {}", _e);
-        }
+        retry += 1;
     }
-
+    if retry >= *max_retries {
+        println!("Max retries exceeded.")
+    }
     Ok(())
 }
 
@@ -40,13 +58,13 @@ fn verify_ack(buf: &mut [u8], expected_ack: &mut u32) -> Result<u32, String> {
 
     println!("Expected Ack: {}", expected_ack);
     if *expected_ack != ack {
-        return Err(format!(
+        Err(format!(
             "ack {} does not match expected ack {}",
             ack, expected_ack
-        ));
+        ))
+    } else {
+        Ok(ack)
     }
-
-    Ok(ack)
 }
 
 fn generate_msg(seq: &u32, ack: u32, msg: &[u8]) -> Vec<u8> {
