@@ -2,7 +2,7 @@ use clap::{Arg, ArgMatches, Command};
 use std::net::IpAddr;
 
 pub fn get_args() -> ArgMatches {
-    Command::new("myapp")
+    Command::new("client")
         .arg(
             Arg::new("target-ip")
                 .short('i')
@@ -37,12 +37,6 @@ pub fn get_args() -> ArgMatches {
         )
         .get_matches()
 }
-
-// pub fn validate_args(args: &[String]) -> Result<String, String> {
-// let formatted_ip_at_port = format_ip_port(args);
-// #[allow(clippy::needless_return)]
-// return Ok(formatted_ip_at_port);
-// }
 
 fn validate_ip(ip: &str) -> Result<(), String> {
     // ::1 ipv6 loopback addr

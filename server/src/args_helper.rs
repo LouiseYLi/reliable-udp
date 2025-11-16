@@ -2,7 +2,7 @@ use clap::{Arg, ArgMatches, Command};
 use std::net::IpAddr;
 
 pub fn get_args() -> ArgMatches {
-    Command::new("myapp")
+    Command::new("server")
         .arg(
             Arg::new("target-ip")
                 .short('i')
