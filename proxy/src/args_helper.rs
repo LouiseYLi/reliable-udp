@@ -221,6 +221,7 @@ pub fn validate_args() -> Result<ProxyConfig, String> {
     Ok(ProxyConfig {
         proxy_addr: format_ip_port(listen_ip, listen_port),
         server_addr: format_ip_port(target_ip, target_port),
+        client_addr: "_".to_string(),
 
         client_drop,
         server_drop,

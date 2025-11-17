@@ -1,6 +1,7 @@
 pub struct ProxyConfig {
     pub proxy_addr: String,
     pub server_addr: String,
+    pub client_addr: String,
 
     pub client_drop: u8,
     pub server_drop: u8,

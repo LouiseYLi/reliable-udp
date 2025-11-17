@@ -1,13 +1,25 @@
 mod args_helper;
 mod config;
+mod io_helper;
 
 use args_helper::*;
 use config::ProxyConfig;
+use io_helper::*;
 
-fn main() {
+// use rand::Rng;
+// use rand::thread_rng;
+use std::io;
+use std::sync::Arc;
+use tokio::net::UdpSocket;
+
+#[tokio::main]
+async fn main() -> io::Result<()> {
     println!("Hello from proxy!");
 
-    let proxy_config: ProxyConfig = match validate_args() {
+    let mut buf = [0u8; 1024];
+    let mut rng = rand::thread_rng();
+
+    let mut proxy_config: ProxyConfig = match validate_args() {
         Ok(p) => p,
         Err(e) => {
             eprintln!("Error: {}", e);
@@ -33,4 +45,11 @@ fn main() {
         "\tServer delay range: {}–{} ms",
         proxy_config.server_delay_min, proxy_config.server_delay_max
     );
+
+    // ===========================
+
+    let socket = Arc::new(UdpSocket::bind(&proxy_config.proxy_addr).await?);
+    loop {
+        handle_dg(socket.clone(), &mut proxy_config, &mut buf, &mut rng).await?;
+    }
 }
