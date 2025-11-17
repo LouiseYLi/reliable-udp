@@ -6,15 +6,16 @@ pub async fn handle_msg(
     socket: &UdpSocket,
     expected_seq: &mut u32,
     buf: &mut [u8],
-    current_target: &mut SocketAddr,
+    _current_target: &mut SocketAddr,
 ) -> Result<(), std::io::Error> {
     let (total_len, target) = socket.recv_from(buf).await?;
     println!("Received {} bytes from client {}", total_len, target);
 
-    if target != *current_target {
-        *expected_seq = 0;
-        *current_target = target;
-    }
+    // TODO: remove current_target if unused
+    // if target != *current_target {
+    //     *expected_seq = 0;
+    //     *current_target = target;
+    // }
 
     match verify_msg(buf, expected_seq) {
         Ok(seq) => {
@@ -50,6 +51,10 @@ fn verify_msg(buf: &mut [u8], expected_seq: &mut u32) -> Result<u32, String> {
     // get first 4B (sequence number)
     let seq_bytes: [u8; 4] = buf[0..ACK_START_INDEX].try_into().unwrap();
     let seq = u32::from_be_bytes(seq_bytes);
+
+    if seq == 0 {
+        *expected_seq = 0;
+    }
 
     println!("Expected Seq: {}", expected_seq);
     println!("Seq: {}", seq);
