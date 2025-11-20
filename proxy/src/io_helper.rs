@@ -79,7 +79,7 @@ async fn handle_ps_dg(
     // drop if number is less
     // if rand_num < proxy_config.server_drop {
     if rand_num < drop {
-        println!("Dropping packet from {}...", target_addr);
+        println!("Dropping packet to {}...", target_addr);
         return Ok(());
     }
 
@@ -95,10 +95,11 @@ async fn handle_ps_dg(
         // let delay_ms: u64 =
         //     rng.gen_range(proxy_config.server_delay_min..proxy_config.server_delay_max) as u64;
         let delay_ms: u64 = rng.gen_range(delay_min..delay_max) as u64;
-        println!("Delaying {} packet for {}ms...", target_addr, delay_ms);
+        println!("Delaying packet to {} for {}ms...", target_addr, delay_ms);
 
         tokio::spawn(async move {
             sleep(Duration::from_millis(delay_ms)).await;
+            println!("Sending packet AFTER DELAY to {}...", addr_clone);
             let _ = socket_clone.send_to(&buf_clone, &addr_clone).await;
         });
         Ok(())

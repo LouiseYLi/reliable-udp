@@ -33,6 +33,7 @@ pub async fn handle_msg(
                 }
                 Err(_e) => {
                     eprintln!("verify_ack error: {}", _e);
+                    continue;
                 }
             },
             Ok(Err(_e)) => {
