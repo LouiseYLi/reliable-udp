@@ -25,7 +25,7 @@ pub async fn handle_dg(
     // log.write_all(receive_str)?;
     log_write(Arc::clone(&log), receive_str).await?;
 
-    println!("\tRead {} bytes...", total_len);
+    // println!("\tRead {} bytes...", total_len);
 
     // determine target, c or s ?
     if is_target_server(proxy_config, &target) {
@@ -119,7 +119,7 @@ async fn handle_incoming_dg(
         // let delay_ms: u64 =
         //     rng.gen_range(proxy_config.server_delay_min..proxy_config.server_delay_max) as u64;
         let delay_ms: u64 = rng.gen_range(delay_min..delay_max) as u64;
-        println!("\tDelaying packet to {} for {}ms...", target_addr, delay_ms);
+        // println!("\tDelaying packet to {} for {}ms...", target_addr, delay_ms);
 
         tokio::spawn(async move {
             let send_str = "[SEND]\n".as_bytes();

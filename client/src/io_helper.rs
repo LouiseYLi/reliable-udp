@@ -22,11 +22,11 @@ pub async fn handle_msg(
     let ignore_str = "[IGNORE]\n".as_bytes();
 
     let msg = wait_user_input();
-    println!("\tSeq: {}", seq);
-    println!("\tMessage: {}", msg);
+    // println!("\tSeq: {}", seq);
+    // println!("\tMessage: {}", msg);
 
     let packet: Vec<u8> = generate_msg(seq, 0, &socket.local_addr()?, msg.as_bytes());
-    println!("\tGen Packet bytes: {:?}", packet);
+    // println!("\tGen Packet bytes: {:?}", packet);
 
     let mut retry: u16 = 0;
     while retry < *max_retries {
@@ -48,7 +48,7 @@ pub async fn handle_msg(
                         // log.write_all(receive_str)?;
                         log_write(Arc::clone(&log), receive_str).await?;
 
-                        println!("\tRead {} bytes...", _total_len);
+                        // println!("\tRead {} bytes...", _total_len);
 
                         *seq += 1;
                         process_ack(&ack);
@@ -107,8 +107,8 @@ fn generate_msg(seq: &u32, ack: u32, src_target: &SocketAddr, msg: &[u8]) -> Vec
     buf.extend_from_slice(&msg_len.to_be_bytes());
 
     buf.extend_from_slice(msg);
-    println!("packet.len = {}", buf.len());
-    println!("{:?}", buf);
+    // println!("packet.len = {}", buf.len());
+    // println!("{:?}", buf);
     buf
 }
 

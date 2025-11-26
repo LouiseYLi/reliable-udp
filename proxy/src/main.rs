@@ -15,7 +15,7 @@ use tokio::net::UdpSocket;
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
-    println!("Hello from proxy!");
+    // println!("Hello from proxy!");
 
     let file_path = "proxy/log.txt";
     let log = Arc::new(Mutex::new(
@@ -54,8 +54,6 @@ async fn main() -> io::Result<()> {
         "\tServer delay range: {}–{} ms",
         proxy_config.server_delay_min, proxy_config.server_delay_max
     );
-
-    // ===========================
 
     let socket = Arc::new(UdpSocket::bind(&proxy_config.proxy_addr).await?);
     loop {

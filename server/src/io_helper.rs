@@ -17,12 +17,12 @@ pub async fn handle_msg(
     let send_str = "[SEND]\n".as_bytes();
 
     buf.fill(0);
-    let (total_len, target) = socket.recv_from(buf).await?;
+    let (_total_len, target) = socket.recv_from(buf).await?;
     println!("[OK SERVER] Received from {}...", target);
 
     log_write(Arc::clone(&log), receive_str).await?;
 
-    println!("\tRead {} bytes...", total_len);
+    // println!("\tRead {} bytes...", total_len);
     // println!(
     //     "\tReceived pkt bytes: {}",
     //     convert_to_string(&buf[MSG_START_INDEX..total_len])
@@ -38,11 +38,11 @@ pub async fn handle_msg(
     };
 
     if src_target != *current_target {
-        println!("\tResetting expected sequence state...");
+        // println!("\tResetting expected sequence state...");
         *expected_seq = 0;
         *current_target = src_target;
-        println!("\tsrc_target = {}", src_target);
-        println!("\tcurrent_target = {}", current_target);
+        // println!("\tsrc_target = {}", src_target);
+        // println!("\tcurrent_target = {}", current_target);
     }
 
     match verify_msg(buf, expected_seq) {
@@ -52,7 +52,7 @@ pub async fn handle_msg(
             }
 
             let packet: Vec<u8> = generate_ack(&0, seq, &[]);
-            println!("\tGen Packet bytes: {:?}", packet);
+            // println!("\tGen Packet bytes: {:?}", packet);
 
             println!("[OK SERVER] Sending to {}...", target);
             socket.send_to(&packet, target).await?;
@@ -86,8 +86,8 @@ fn verify_msg(buf: &mut [u8], expected_seq: &mut u32) -> Result<(u32, bool), Str
     let seq_bytes: [u8; 4] = buf[0..ACK_START_INDEX].try_into().unwrap();
     let seq = u32::from_be_bytes(seq_bytes);
 
-    println!("\tExpected Seq: {}", expected_seq);
-    println!("\tSeq: {}", seq);
+    // println!("\tExpected Seq: {}", expected_seq);
+    // println!("\tSeq: {}", seq);
     if seq == *expected_seq {
         println!("\t[VALID] SEQ received: {}", seq);
         *expected_seq += 1;

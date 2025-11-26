@@ -12,7 +12,7 @@ use tokio::net::UdpSocket;
 
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
-    println!("Hello from client!");
+    // println!("Hello from client!");
 
     let file_path = "client/log.txt";
     // let initial_content = "hello";
