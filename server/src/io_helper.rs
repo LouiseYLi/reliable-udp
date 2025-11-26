@@ -1,5 +1,9 @@
+use crate::File;
 use crate::globals::*;
+use std::io::Write;
 use std::net::{IpAddr, Ipv6Addr, SocketAddr};
+use std::sync::Arc;
+use std::sync::Mutex;
 use tokio::net::UdpSocket;
 
 pub async fn handle_msg(
@@ -7,10 +11,17 @@ pub async fn handle_msg(
     expected_seq: &mut u32,
     buf: &mut [u8],
     current_target: &mut SocketAddr,
+    log: Arc<Mutex<File>>,
 ) -> Result<(), std::io::Error> {
+    let receive_str = "[RECEIVE]\n".as_bytes();
+    let send_str = "[SEND]\n".as_bytes();
+
     buf.fill(0);
     let (total_len, target) = socket.recv_from(buf).await?;
     println!("[OK SERVER] Received from {}...", target);
+
+    log_write(Arc::clone(&log), receive_str).await?;
+
     println!("\tRead {} bytes...", total_len);
     // println!(
     //     "\tReceived pkt bytes: {}",
@@ -45,6 +56,8 @@ pub async fn handle_msg(
 
             println!("[OK SERVER] Sending to {}...", target);
             socket.send_to(&packet, target).await?;
+
+            log_write(Arc::clone(&log), send_str).await?;
         }
         Err(_e) => {
             println!("[IGNORE] Out of order packet to {}...", target);
@@ -122,4 +135,18 @@ pub fn parse_src_target(src_bytes: &[u8]) -> Result<SocketAddr, String> {
     let ip = IpAddr::V6(ipv6);
 
     Ok(SocketAddr::new(ip, port))
+}
+
+pub async fn log_write(log: Arc<Mutex<File>>, data: &[u8]) -> std::io::Result<()> {
+    let data_vec = data.to_vec();
+    let log_clone = Arc::clone(&log);
+
+    tokio::task::spawn_blocking(move || -> std::io::Result<()> {
+        let mut file = log_clone.lock().unwrap();
+        file.write_all(&data_vec)?;
+        file.flush()?;
+        Ok(())
+    })
+    .await
+    .unwrap()
 }

@@ -8,13 +8,22 @@ use io_helper::*;
 
 // use rand::Rng;
 // use rand::thread_rng;
+use std::fs::OpenOptions;
 use std::io;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use tokio::net::UdpSocket;
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
     println!("Hello from proxy!");
+
+    let file_path = "proxy/log.txt";
+    let log = Arc::new(Mutex::new(
+        OpenOptions::new()
+            .append(true)
+            .create(true)
+            .open(file_path)?,
+    ));
 
     let mut buf = [0u8; 1024];
     let mut rng = rand::thread_rng();
@@ -50,6 +59,13 @@ async fn main() -> io::Result<()> {
 
     let socket = Arc::new(UdpSocket::bind(&proxy_config.proxy_addr).await?);
     loop {
-        handle_dg(socket.clone(), &mut proxy_config, &mut buf, &mut rng).await?;
+        handle_dg(
+            socket.clone(),
+            &mut proxy_config,
+            &mut buf,
+            &mut rng,
+            Arc::clone(&log),
+        )
+        .await?;
     }
 }

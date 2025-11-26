@@ -1,6 +1,9 @@
+use crate::File;
 use crate::globals::*;
 use std::io::{Write, stdin, stdout};
 use std::net::SocketAddr;
+use std::sync::Arc;
+use std::sync::Mutex;
 use std::time::Duration;
 use tokio::net::UdpSocket;
 use tokio::time::timeout;
@@ -12,7 +15,12 @@ pub async fn handle_msg(
     buf: &mut [u8],
     timeout_secs: &u64,
     max_retries: &u16,
+    log: Arc<Mutex<File>>,
 ) -> Result<(), std::io::Error> {
+    let send_str = "[SEND]\n".as_bytes();
+    let receive_str = "[RECEIVE]\n".as_bytes();
+    let ignore_str = "[IGNORE]\n".as_bytes();
+
     let msg = wait_user_input();
     println!("\tSeq: {}", seq);
     println!("\tMessage: {}", msg);
@@ -24,6 +32,9 @@ pub async fn handle_msg(
     while retry < *max_retries {
         socket.send_to(&packet, target).await?;
         println!("[OK CLIENT] Sending to {}...", target);
+        // log.write_all(send_str)?;
+        log_write(Arc::clone(&log), send_str).await?;
+
         buf.fill(0);
         let ack_result = timeout(Duration::from_secs(*timeout_secs), socket.recv_from(buf)).await;
 
@@ -34,6 +45,9 @@ pub async fn handle_msg(
                 match verify_ack(ack_slice, seq) {
                     Ok(ack) => {
                         println!("[OK CLIENT] Received from {}...", _target);
+                        // log.write_all(receive_str)?;
+                        log_write(Arc::clone(&log), receive_str).await?;
+
                         println!("\tRead {} bytes...", _total_len);
 
                         *seq += 1;
@@ -42,6 +56,9 @@ pub async fn handle_msg(
                     }
                     Err(_e) => {
                         println!("[IGNORE] Received from {}...", _target);
+                        // log.write_all(ignore_str)?;
+                        log_write(Arc::clone(&log), ignore_str).await?;
+
                         eprintln!("\tverify_ack error: {}", _e);
                         continue;
                     }
@@ -135,4 +152,25 @@ fn encode_socket_addr(addr: &SocketAddr) -> [u8; 18] {
     }
 
     buf
+}
+
+pub async fn log_write(log: Arc<Mutex<File>>, data: &[u8]) -> std::io::Result<()> {
+    let data_vec = data.to_vec();
+    let log_clone = Arc::clone(&log);
+
+    tokio::task::spawn_blocking(move || -> std::io::Result<()> {
+        let mut file = log_clone.lock().unwrap();
+        file.write_all(&data_vec)?;
+        file.flush()?;
+        Ok(())
+    })
+    .await
+    .unwrap()
+}
+
+pub fn clear_log(log: &Arc<Mutex<File>>) -> std::io::Result<()> {
+    let mut file = log.lock().unwrap(); // lock the mutex
+    file.set_len(0)?; // truncate file to zero
+    file.flush()?; // ensure changes are written immediately
+    Ok(())
 }
