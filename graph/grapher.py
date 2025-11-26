@@ -45,17 +45,18 @@ plt.ion()
 fig, ax = plt.subplots()
 
 programs = ["Client", "Proxy", "Server"]
-metrics = ["Sent", "Received", "Delayed", "Dropped"]
+metrics = ["Sent", "Received", "Delayed", "Dropped", "Ignored"]
 n_metrics = 4
 width = 0.25  
 spacing = 1.5  
 x = np.arange(len(programs)) * spacing
 
 # bars
-bars_sent = ax.bar(x - 1.5*width, [0]*len(programs), width, label="Sent", color="#b2f2bb")
-bars_received = ax.bar(x - 0.5*width, [0]*len(programs), width, label="Received", color="#a6cee3")
-bars_delayed = ax.bar(x + 0.5*width, [0]*len(programs), width, label="Delayed", color="#b39ddb")
-bars_dropped = ax.bar(x + 1.5*width, [0]*len(programs), width, label="Dropped", color="#fbb4ae")
+bars_sent = ax.bar(x - 2*width, [0]*len(programs), width, label="Sent", color="#b2f2bb")
+bars_received = ax.bar(x - 1*width, [0]*len(programs), width, label="Received", color="#a6cee3")
+bars_delayed = ax.bar(x + 0*width, [0]*len(programs), width, label="Delayed", color="#b39ddb")
+bars_dropped = ax.bar(x + 1*width, [0]*len(programs), width, label="Dropped", color="#fbb4ae")
+bars_ignored = ax.bar(x + 2*width, [0]*len(programs), width, label="Ignored", color="#fed976")
 
 ax.set_xticks(x)
 ax.set_xticklabels(programs)
@@ -78,6 +79,7 @@ try:
         received_values = [client_log.received, proxy_log.received, server_log.received]
         delayed_values = [client_log.delayed, proxy_log.delayed, server_log.delayed]
         dropped_values = [client_log.dropped, proxy_log.dropped, server_log.dropped]
+        ignored_values = [client_log.ignored, proxy_log.ignored, server_log.ignored]
 
         for bar, target in zip(bars_sent, sent_values):
             current = bar.get_height()
@@ -89,6 +91,9 @@ try:
             current = bar.get_height()
             bar.set_height(current + (target - current) * smoothing_factor)
         for bar, target in zip(bars_dropped, dropped_values):
+            current = bar.get_height()
+            bar.set_height(current + (target - current) * smoothing_factor)
+        for bar, target in zip(bars_ignored, ignored_values):
             current = bar.get_height()
             bar.set_height(current + (target - current) * smoothing_factor)
             

@@ -21,7 +21,7 @@ pub async fn handle_dg(
     let receive_str = "[RECEIVE]\n".as_bytes();
 
     let (total_len, target) = socket.recv_from(buf).await?;
-    println!("[OK PROXY] Received from {}...", target);
+    println!("[RECEIVE] Received from {}...", target);
     // log.write_all(receive_str)?;
     log_write(Arc::clone(&log), receive_str).await?;
 
@@ -98,7 +98,7 @@ async fn handle_incoming_dg(
     // drop if number is less
     // if rand_num < proxy_config.server_drop {
     if rand_num < drop {
-        println!("[DROP] Sending to {}...", target_addr);
+        println!("[DROP] before sending to {}...", target_addr);
         log_write(Arc::clone(&log), drop_str).await?;
         return Ok(());
     }
@@ -123,14 +123,17 @@ async fn handle_incoming_dg(
 
         tokio::spawn(async move {
             let send_str = "[SEND]\n".as_bytes();
+            println!(
+                "[DELAY] for {}ms before sending to {}...",
+                delay_ms, addr_clone
+            );
             sleep(Duration::from_millis(delay_ms)).await;
-            println!("[DELAY] Sending to {}...", addr_clone);
             let _ = socket_clone.send_to(&buf_clone, &addr_clone).await;
             let _ = log_write(log_clone, send_str).await;
         });
         Ok(())
     } else {
-        println!("[OK PROXY] Sending to {}...", target_addr);
+        println!("[SEND] Sending to {}...", target_addr);
         socket.send_to(buf, target_addr).await?;
         log_write(log, send_str).await?;
         Ok(())

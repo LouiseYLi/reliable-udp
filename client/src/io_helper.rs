@@ -31,50 +31,57 @@ pub async fn handle_msg(
     let mut retry: u16 = 0;
     while retry < *max_retries {
         socket.send_to(&packet, target).await?;
-        println!("[OK CLIENT] Sending to {}...", target);
+        println!("[SEND] Sending to {}...", target);
+        // println!("outerloop");
         // log.write_all(send_str)?;
         log_write(Arc::clone(&log), send_str).await?;
 
         buf.fill(0);
-        let ack_result = timeout(Duration::from_secs(*timeout_secs), socket.recv_from(buf)).await;
 
-        match ack_result {
-            Ok(Ok((_total_len, _target))) => {
-                let ack_slice = &buf[.._total_len];
+        loop {
+            let ack_result =
+                timeout(Duration::from_secs(*timeout_secs), socket.recv_from(buf)).await;
 
-                match verify_ack(ack_slice, seq) {
-                    Ok(ack) => {
-                        println!("[OK CLIENT] Received from {}...", _target);
-                        // log.write_all(receive_str)?;
-                        log_write(Arc::clone(&log), receive_str).await?;
+            match ack_result {
+                Ok(Ok((_total_len, _target))) => {
+                    let ack_slice = &buf[.._total_len];
 
-                        // println!("\tRead {} bytes...", _total_len);
+                    match verify_ack(ack_slice, seq) {
+                        Ok(ack) => {
+                            // println!("[OK CLIENT] Received from {}...", _target);
+                            // log.write_all(receive_str)?;
+                            log_write(Arc::clone(&log), receive_str).await?;
 
-                        *seq += 1;
-                        process_ack(&ack);
-                        break;
-                    }
-                    Err(_e) => {
-                        println!("[IGNORE] Received from {}...", _target);
-                        // log.write_all(ignore_str)?;
-                        log_write(Arc::clone(&log), ignore_str).await?;
+                            // println!("\tRead {} bytes...", _total_len);
 
-                        eprintln!("\tverify_ack error: {}", _e);
-                        continue;
+                            *seq += 1;
+                            process_ack(&ack);
+                            break;
+                        }
+                        Err(_e) => {
+                            println!("[IGNORE] Ignored {}...", _e);
+                            // log.write_all(ignore_str)?;
+                            log_write(Arc::clone(&log), ignore_str).await?;
+
+                            // eprintln!("\tverify_ack error: {}", _e);
+                            continue;
+                        }
                     }
                 }
-            }
-            Ok(Err(_e)) => {
-                eprintln!("\trecv_from error: {}", _e);
-            }
-            Err(_e) => {
-                println!("\tTimeout expired, retransmit... {}", _e)
+                Ok(Err(_e)) => {
+                    eprintln!("\trecv_from error: {}", _e);
+                    retry += 1;
+                }
+                Err(_e) => {
+                    println!("\tTimeout expired, retransmit... {}", _e);
+                    retry += 1;
+                    break;
+                }
             }
         }
-
-        retry += 1;
     }
     if retry >= *max_retries {
+        *seq += 1;
         println!("\tMax retries exceeded.")
     }
     Ok(())
@@ -129,7 +136,7 @@ fn wait_user_input() -> String {
 }
 
 fn process_ack(ack: &u32) {
-    println!("\t[VALID] ACK received: {}", ack);
+    println!("\t[RECEIVE] Valid ACK received: {}", ack);
 }
 
 fn encode_socket_addr(addr: &SocketAddr) -> [u8; 18] {

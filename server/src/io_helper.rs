@@ -10,15 +10,16 @@ pub async fn handle_msg(
     socket: &UdpSocket,
     expected_seq: &mut u32,
     buf: &mut [u8],
-    current_target: &mut SocketAddr,
+    _current_target: &mut SocketAddr,
     log: Arc<Mutex<File>>,
 ) -> Result<(), std::io::Error> {
     let receive_str = "[RECEIVE]\n".as_bytes();
     let send_str = "[SEND]\n".as_bytes();
+    let ignore_str = "[IGNORE]\n".as_bytes();
 
     buf.fill(0);
     let (_total_len, target) = socket.recv_from(buf).await?;
-    println!("[OK SERVER] Received from {}...", target);
+    println!("[RECEIVE] Received from {}...", target);
 
     log_write(Arc::clone(&log), receive_str).await?;
 
@@ -29,7 +30,7 @@ pub async fn handle_msg(
     // );
     // println!("\traw bytes: {:?}", convert_to_string(&buf[..total_len]));
 
-    let src_target = match parse_src_target(&buf[SRC_TARGET_START_INDEX..MSG_LEN_START_INDEX]) {
+    let _src_target = match parse_src_target(&buf[SRC_TARGET_START_INDEX..MSG_LEN_START_INDEX]) {
         Ok(addr) => addr,
         Err(e) => {
             eprintln!("\tFailed to parse source target: {}", e);
@@ -37,13 +38,13 @@ pub async fn handle_msg(
         }
     };
 
-    if src_target != *current_target {
-        // println!("\tResetting expected sequence state...");
-        *expected_seq = 0;
-        *current_target = src_target;
-        // println!("\tsrc_target = {}", src_target);
-        // println!("\tcurrent_target = {}", current_target);
-    }
+    // if src_target != *current_target {
+    //     // println!("\tResetting expected sequence state...");
+    //     *expected_seq = 0;
+    //     *current_target = src_target;
+    //     // println!("\tsrc_target = {}", src_target);
+    //     // println!("\tcurrent_target = {}", current_target);
+    // }
 
     match verify_msg(buf, expected_seq) {
         Ok((seq, do_print)) => {
@@ -54,14 +55,18 @@ pub async fn handle_msg(
             let packet: Vec<u8> = generate_ack(&0, seq, &[]);
             // println!("\tGen Packet bytes: {:?}", packet);
 
-            println!("[OK SERVER] Sending to {}...", target);
+            println!("[SEND] Sending to {}...", target);
             socket.send_to(&packet, target).await?;
 
             log_write(Arc::clone(&log), send_str).await?;
         }
         Err(_e) => {
-            println!("[IGNORE] Out of order packet to {}...", target);
-            eprintln!("Error: {}", _e);
+            println!(
+                "[IGNORE] Out of order or old packet ignored from {}...",
+                target
+            );
+            log_write(Arc::clone(&log), ignore_str).await?;
+            // eprintln!("Error: {}", _e);
         }
     }
 
@@ -89,11 +94,11 @@ fn verify_msg(buf: &mut [u8], expected_seq: &mut u32) -> Result<(u32, bool), Str
     // println!("\tExpected Seq: {}", expected_seq);
     // println!("\tSeq: {}", seq);
     if seq == *expected_seq {
-        println!("\t[VALID] SEQ received: {}", seq);
+        println!("\t[RECEIVE] Valid SEQ received: {}", seq);
         *expected_seq += 1;
         Ok((seq, true))
-    } else if seq < *expected_seq {
-        println!("\t[DUPLICATE] SEQ received: {}", seq);
+    } else if seq == (*expected_seq - 1) {
+        println!("\t[RECEIVE] Duplicate SEQ received: {}", seq);
         Ok((seq, false))
     } else {
         Err(format!(
