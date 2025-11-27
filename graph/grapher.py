@@ -1,7 +1,9 @@
+import sys
 import time
 import matplotlib.pyplot as plt
-from dataclasses import dataclass
 import numpy as np
+import os
+from dataclasses import dataclass
 
 @dataclass
 class ProgramLog:
@@ -14,6 +16,13 @@ class ProgramLog:
         self.last_position = 0
     def read_log(self, file_path: str):
         try:
+            file_size = os.path.getsize(file_path)
+
+            # if file empty, reset last_position but keep counters
+            if file_size == 0:
+                self.last_position = 0
+                return
+
             with open(file_path, "r") as f:
                 f.seek(self.last_position)  # move to last read position
                 for line in f:
@@ -31,6 +40,21 @@ class ProgramLog:
                 self.last_position = f.tell()
         except FileNotFoundError:
             pass
+
+if "-r" in sys.argv:
+    print(os.getcwd())
+    try:
+        os.remove("/home/louise/BCIT/7005comp/Assignments/COMP7005-project/reliable-udp/client/log.txt")
+    except FileNotFoundError:
+        pass
+    try:
+        os.remove("/home/louise/BCIT/7005comp/Assignments/COMP7005-project/reliable-udp/proxy/log.txt")
+    except FileNotFoundError:
+        pass
+    try:
+        os.remove("/home/louise/BCIT/7005comp/Assignments/COMP7005-project/reliable-udp/server/log.txt")
+    except FileNotFoundError:
+        pass
 
 client_log = ProgramLog()
 proxy_log = ProgramLog()
