@@ -10,7 +10,7 @@ pub async fn handle_msg(
     socket: &UdpSocket,
     expected_seq: &mut u32,
     buf: &mut [u8],
-    _current_target: &mut SocketAddr,
+    current_target: &mut SocketAddr,
     log: Arc<Mutex<File>>,
 ) -> Result<(), std::io::Error> {
     let receive_str = "[RECEIVE]\n".as_bytes();
@@ -30,7 +30,7 @@ pub async fn handle_msg(
     // );
     // println!("\traw bytes: {:?}", convert_to_string(&buf[..total_len]));
 
-    let _src_target = match parse_src_target(&buf[SRC_TARGET_START_INDEX..MSG_LEN_START_INDEX]) {
+    let src_target = match parse_src_target(&buf[SRC_TARGET_START_INDEX..MSG_LEN_START_INDEX]) {
         Ok(addr) => addr,
         Err(e) => {
             eprintln!("\tFailed to parse source target: {}", e);
@@ -38,13 +38,13 @@ pub async fn handle_msg(
         }
     };
 
-    // if src_target != *current_target {
-    //     // println!("\tResetting expected sequence state...");
-    //     *expected_seq = 0;
-    //     *current_target = src_target;
-    //     // println!("\tsrc_target = {}", src_target);
-    //     // println!("\tcurrent_target = {}", current_target);
-    // }
+    if src_target != *current_target {
+        // println!("\tResetting expected sequence state...");
+        *expected_seq = 0;
+        *current_target = src_target;
+        // println!("\tsrc_target = {}", src_target);
+        // println!("\tcurrent_target = {}", current_target);
+    }
 
     match verify_msg(buf, expected_seq) {
         Ok((seq, do_print)) => {
@@ -94,11 +94,11 @@ fn verify_msg(buf: &mut [u8], expected_seq: &mut u32) -> Result<(u32, bool), Str
     // println!("\tExpected Seq: {}", expected_seq);
     // println!("\tSeq: {}", seq);
     if seq == *expected_seq {
-        println!("\t[RECEIVE] Valid SEQ received: {}", seq);
+        println!("\t[VALID] Valid SEQ received: {}", seq);
         *expected_seq += 1;
         Ok((seq, true))
     } else if seq == (*expected_seq - 1) {
-        println!("\t[RECEIVE] Duplicate SEQ received: {}", seq);
+        println!("\t[INVALID] Duplicate SEQ received: {}", seq);
         Ok((seq, false))
     } else {
         Err(format!(

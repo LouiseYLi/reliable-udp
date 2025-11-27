@@ -29,7 +29,7 @@ pub async fn handle_msg(
     // println!("\tGen Packet bytes: {:?}", packet);
 
     let mut retry: u16 = 0;
-    while retry < *max_retries {
+    'retry_loop: while retry <= *max_retries {
         socket.send_to(&packet, target).await?;
         println!("[SEND] Sending to {}...", target);
         // println!("outerloop");
@@ -56,7 +56,7 @@ pub async fn handle_msg(
 
                             *seq += 1;
                             process_ack(&ack);
-                            break;
+                            break 'retry_loop;
                         }
                         Err(_e) => {
                             println!("[IGNORE] Ignored {}...", _e);
@@ -71,6 +71,7 @@ pub async fn handle_msg(
                 Ok(Err(_e)) => {
                     eprintln!("\trecv_from error: {}", _e);
                     retry += 1;
+                    break;
                 }
                 Err(_e) => {
                     println!("\tTimeout expired, retransmit... {}", _e);
@@ -80,7 +81,7 @@ pub async fn handle_msg(
             }
         }
     }
-    if retry >= *max_retries {
+    if retry > *max_retries {
         *seq += 1;
         println!("\tMax retries exceeded.")
     }
