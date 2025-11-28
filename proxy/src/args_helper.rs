@@ -151,7 +151,7 @@ fn validate_delay_range(min: &str, max: &str) -> Result<(u16, u16), String> {
             return Err(format!("Max delay must be a valid number: {}", max));
         }
     };
-    if max_delay <= min_delay {
+    if max_delay < min_delay {
         Err(format!(
             "Range is not valid. Min: {} Max: {}",
             min_delay, max_delay

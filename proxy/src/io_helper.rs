@@ -153,3 +153,10 @@ pub async fn log_write(log: Arc<Mutex<File>>, data: &[u8]) -> std::io::Result<()
     .await
     .unwrap()
 }
+
+pub fn clear_log(log: &Arc<Mutex<File>>) -> std::io::Result<()> {
+    let mut file = log.lock().unwrap(); // lock the mutex
+    file.set_len(0)?; // truncate file to zero
+    file.flush()?; // ensure changes are written immediately
+    Ok(())
+}

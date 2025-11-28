@@ -23,6 +23,7 @@ async fn main() -> io::Result<()> {
             .create(true)
             .open(file_path)?,
     ));
+    clear_log(&log)?;
 
     let mut expected_seq: u32 = 0;
     let mut buf = [0u8; 1024];

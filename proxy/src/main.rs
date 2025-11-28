@@ -24,6 +24,7 @@ async fn main() -> io::Result<()> {
             .create(true)
             .open(file_path)?,
     ));
+    clear_log(&log)?;
 
     let mut buf = [0u8; 1024];
     let mut rng = rand::thread_rng();
