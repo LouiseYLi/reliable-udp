@@ -6,8 +6,6 @@ use args_helper::*;
 use config::ProxyConfig;
 use io_helper::*;
 
-// use rand::Rng;
-// use rand::thread_rng;
 use std::fs::OpenOptions;
 use std::io;
 use std::sync::{Arc, Mutex};
@@ -15,7 +13,6 @@ use tokio::net::UdpSocket;
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
-    // println!("Hello from proxy!");
 
     let file_path = "proxy/log.txt";
     let log = Arc::new(Mutex::new(

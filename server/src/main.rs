@@ -14,8 +14,6 @@ use tokio::net::UdpSocket;
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
-    // println!("Hello from server!");
-
     let file_path = "server/log.txt";
     let log = Arc::new(Mutex::new(
         OpenOptions::new()

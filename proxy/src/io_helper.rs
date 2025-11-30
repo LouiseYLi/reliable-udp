@@ -96,7 +96,6 @@ async fn handle_incoming_dg(
 
     let mut rand_num = rng.gen_range(0..100 + 1);
     // drop if number is less
-    // if rand_num < proxy_config.server_drop {
     if rand_num < drop {
         println!("[DROP] before sending to {}...", target_addr);
         log_write(Arc::clone(&log), drop_str).await?;
@@ -105,7 +104,6 @@ async fn handle_incoming_dg(
 
     // delay if number is less
     rand_num = rng.gen_range(0..100 + 1);
-    // if rand_num < proxy_config.server_delay {
     if rand_num < delay {
         log_write(Arc::clone(&log), delay_str).await?;
 
@@ -114,12 +112,7 @@ async fn handle_incoming_dg(
         let buf_clone = buf[..total_len].to_vec();
         let addr_clone = target_addr.clone();
 
-        // let client_addr_clone = proxy_config.client_addr.clone();
-
-        // let delay_ms: u64 =
-        //     rng.gen_range(proxy_config.server_delay_min..proxy_config.server_delay_max) as u64;
         let delay_ms: u64 = rng.gen_range(delay_min..delay_max) as u64;
-        // println!("\tDelaying packet to {} for {}ms...", target_addr, delay_ms);
 
         tokio::spawn(async move {
             let send_str = "[SEND]\n".as_bytes();

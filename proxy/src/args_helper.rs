@@ -216,8 +216,6 @@ pub fn validate_args() -> Result<ProxyConfig, String> {
     let (server_delay_min, server_delay_max) =
         validate_delay_range(server_delay_time_min_str, server_delay_time_max_str)?;
 
-    // let formatted_listen_ip_at_port = format_ip_port(listen_ip, listen_port);
-    // let formatted_target_ip_at_port = format_ip_port(target_ip, target_port);
     Ok(ProxyConfig {
         proxy_addr: format_ip_port(listen_ip, listen_port),
         server_addr: format_ip_port(target_ip, target_port),

@@ -23,13 +23,6 @@ pub async fn handle_msg(
 
     log_write(Arc::clone(&log), receive_str).await?;
 
-    // println!("\tRead {} bytes...", total_len);
-    // println!(
-    //     "\tReceived pkt bytes: {}",
-    //     convert_to_string(&buf[MSG_START_INDEX..total_len])
-    // );
-    // println!("\traw bytes: {:?}", convert_to_string(&buf[..total_len]));
-
     let src_target = match parse_src_target(&buf[SRC_TARGET_START_INDEX..MSG_LEN_START_INDEX]) {
         Ok(addr) => addr,
         Err(e) => {
@@ -39,11 +32,8 @@ pub async fn handle_msg(
     };
 
     if src_target != *current_target {
-        // println!("\tResetting expected sequence state...");
         *expected_seq = 0;
         *current_target = src_target;
-        // println!("\tsrc_target = {}", src_target);
-        // println!("\tcurrent_target = {}", current_target);
     }
 
     match verify_msg(buf, expected_seq) {
@@ -53,7 +43,6 @@ pub async fn handle_msg(
             }
 
             let packet: Vec<u8> = generate_ack(&0, seq, &[]);
-            // println!("\tGen Packet bytes: {:?}", packet);
 
             println!("[SEND] Sending to {}...", target);
             socket.send_to(&packet, target).await?;
@@ -66,16 +55,11 @@ pub async fn handle_msg(
                 target
             );
             log_write(Arc::clone(&log), ignore_str).await?;
-            // eprintln!("Error: {}", _e);
         }
     }
 
     Ok(())
 }
-
-// fn convert_to_string(bytes: &[u8]) -> String {
-//     String::from_utf8_lossy(bytes).into_owned()
-// }
 
 fn generate_ack(seq: &u32, ack: u32, msg: &[u8]) -> Vec<u8> {
     let mut buf = Vec::new();
@@ -91,8 +75,6 @@ fn verify_msg(buf: &mut [u8], expected_seq: &mut u32) -> Result<(u32, bool), Str
     let seq_bytes: [u8; 4] = buf[0..ACK_START_INDEX].try_into().unwrap();
     let seq = u32::from_be_bytes(seq_bytes);
 
-    // println!("\tExpected Seq: {}", expected_seq);
-    // println!("\tSeq: {}", seq);
     if seq == *expected_seq {
         println!("\t[VALID] Valid SEQ received: {}", seq);
         *expected_seq += 1;
@@ -110,8 +92,6 @@ fn verify_msg(buf: &mut [u8], expected_seq: &mut u32) -> Result<(u32, bool), Str
 
 fn process_msg(buf: &mut [u8]) {
     // get payload
-    // let msg = convert_to_string(&buf[MSG_START_INDEX..total_len]);
-    // println!("\tMessage: {}", msg);
     let msg_len = u32::from_be_bytes(buf[26..30].try_into().unwrap()) as usize;
 
     let msg_bytes = &buf[30..30 + msg_len];
@@ -128,8 +108,6 @@ pub fn parse_src_target(src_bytes: &[u8]) -> Result<SocketAddr, String> {
             src_bytes.len()
         ));
     }
-    // println!("\tsrc_bytes: {:?}", src_bytes);
-    // First 16 bytes is IPv6
     let mut ip_bytes = [0u8; 16];
     ip_bytes.copy_from_slice(&src_bytes[0..16]);
 
