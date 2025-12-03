@@ -96,7 +96,7 @@ async fn handle_incoming_dg(
 
     let mut rand_num = rng.gen_range(0..100 + 1);
     // drop if number is less
-    if rand_num < drop {
+    if rand_num <= drop {
         println!("[DROP] before sending to {}...", target_addr);
         log_write(Arc::clone(&log), drop_str).await?;
         return Ok(());
@@ -104,7 +104,7 @@ async fn handle_incoming_dg(
 
     // delay if number is less
     rand_num = rng.gen_range(0..100 + 1);
-    if rand_num < delay {
+    if rand_num <= delay {
         log_write(Arc::clone(&log), delay_str).await?;
 
         let log_clone = Arc::clone(&log);
