@@ -79,7 +79,7 @@ fn verify_msg(buf: &mut [u8], expected_seq: &mut u32) -> Result<(u32, bool), Str
         println!("\t[VALID] Valid SEQ received: {}", seq);
         *expected_seq += 1;
         Ok((seq, true))
-    } else if seq == (*expected_seq - 1) {
+    } else if *expected_seq > 0 && seq == *expected_seq - 1 {
         println!("\t[INVALID] Duplicate SEQ received: {}", seq);
         Ok((seq, false))
     } else {
